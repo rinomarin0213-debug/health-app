@@ -1,1 +1,948 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心と体の健康管理アプリ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #f0fdfa; /* Tailwind teal-50 */
+            color: #134e4a; /* Tailwind teal-900 */
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
 
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .mood-btn {
+            transition: all 0.2s;
+        }
+        
+        .mood-btn.selected {
+            transform: scale(1.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-color: #0d9488; /* Tailwind teal-600 */
+            background-color: #ccfbf1; /* Tailwind teal-100 */
+        }
+        
+        /* Custom scrollbar for horizontal lists */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .breathe-circle {
+            animation: breathe 8s infinite ease-in-out;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.5); opacity: 0.4; }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+
+    <header class="bg-teal-600 text-white p-4 shadow-md sticky top-0 z-10">
+        <h1 class="text-xl font-bold text-center"><i class="fa-solid fa-leaf mr-2"></i>心と体の記録</h1>
+    </header>
+
+    <main class="max-w-md mx-auto p-4">
+        
+        <!-- ==================== RECORD TAB ==================== -->
+        <section id="tab-record" class="tab-content active space-y-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-teal-100">
+                <h2 class="text-lg font-bold mb-4 text-center" id="current-date"></h2>
+                
+                <div class="mb-6">
+                    <p class="mb-3 text-sm font-medium text-gray-700">今日の体調は？</p>
+                    <div class="flex flex-wrap justify-center gap-2 sm:gap-3" id="mood-selector">
+                        <button class="mood-btn w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-transparent text-xl sm:text-2xl bg-gray-50 flex items-center justify-center" data-val="1" data-label="絶不調">😭</button>
+                        <button class="mood-btn w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-transparent text-xl sm:text-2xl bg-gray-50 flex items-center justify-center" data-val="2" data-label="悪い">😫</button>
+                        <button class="mood-btn w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-transparent text-xl sm:text-2xl bg-gray-50 flex items-center justify-center" data-val="3" data-label="やや不調">😞</button>
+                        <button class="mood-btn w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-transparent text-xl sm:text-2xl bg-gray-50 flex items-center justify-center" data-val="4" data-label="普通">😐</button>
+                        <button class="mood-btn w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-transparent text-xl sm:text-2xl bg-gray-50 flex items-center justify-center" data-val="5" data-label="やや良い">🙂</button>
+                        <button class="mood-btn w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-transparent text-xl sm:text-2xl bg-gray-50 flex items-center justify-center" data-val="6" data-label="良い">😆</button>
+                        <button class="mood-btn w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-transparent text-xl sm:text-2xl bg-gray-50 flex items-center justify-center" data-val="7" data-label="絶好調">✨</button>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <p class="mb-3 text-sm font-medium text-gray-700">今日の要因・出来事（複数選択可）</p>
+                    <div class="flex flex-wrap gap-2" id="factor-selector">
+                        <button class="factor-btn px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-600 bg-white transition-colors">😴 睡眠不足</button>
+                        <button class="factor-btn px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-600 bg-white transition-colors">🏢 仕事のストレス</button>
+                        <button class="factor-btn px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-600 bg-white transition-colors">🗣️ 人間関係の悩み</button>
+                        <button class="factor-btn px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-600 bg-white transition-colors">🌧️ 天気痛/気圧</button>
+                        <button class="factor-btn px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-600 bg-white transition-colors">🩸 生理/ホルモン</button>
+                        <button class="factor-btn px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-600 bg-white transition-colors">🍻 飲みすぎ</button>
+                        <button class="factor-btn px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-600 bg-white transition-colors">🚶 運動不足</button>
+                        <button class="factor-btn px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-600 bg-white transition-colors">🍔 食べすぎ/胃腸</button>
+                        <button class="factor-btn px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-600 bg-white transition-colors">💊 薬を飲んだ</button>
+                        <button class="factor-btn px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-600 bg-white transition-colors">🧘 リラックスできた</button>
+                        <button class="factor-btn px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-600 bg-white transition-colors">🛁 湯船に浸かった</button>
+                        <button class="factor-btn px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-600 bg-white transition-colors">🏃 運動した</button>
+                        <button class="factor-btn px-3 py-1.5 rounded-full border border-gray-300 text-sm text-gray-600 bg-white transition-colors">💤 よく眠れた</button>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <p class="mb-2 text-sm font-medium text-gray-700">メモ</p>
+                    <textarea id="note-input" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none" rows="3" placeholder="気になったことなどを自由に記入"></textarea>
+                </div>
+
+                <button id="save-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-colors shadow-sm">
+                    記録を保存する
+                </button>
+            </div>
+            
+            <div id="save-message" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative" role="alert">
+                <span class="block sm:inline">今日の記録を保存しました。</span>
+            </div>
+        </section>
+
+        <!-- ==================== HISTORY & ANALYSIS TAB ==================== -->
+        <section id="tab-history" class="tab-content space-y-6">
+            
+            <!-- Chart Card -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-teal-100">
+                <h3 class="text-md font-bold mb-2"><i class="fa-solid fa-chart-line mr-2 text-teal-600"></i>最近の体調推移</h3>
+                <div class="relative h-48 w-full">
+                    <canvas id="moodChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Analysis Card -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-teal-100">
+                <h3 class="text-md font-bold mb-4"><i class="fa-solid fa-magnifying-glass-chart mr-2 text-teal-600"></i>体調不良の要因分析</h3>
+                <p class="text-xs text-gray-500 mb-3">※体調が「やや不調」以下だった日に共通する要因</p>
+                <div id="analysis-results" class="space-y-3">
+                    <!-- JS will populate this -->
+                    <p class="text-sm text-center text-gray-500 py-4">データが不足しています。数日記録を続けてみましょう。</p>
+                </div>
+            </div>
+
+            <!-- AI Analysis Card -->
+            <div class="bg-gradient-to-br from-teal-50 to-blue-50 rounded-2xl p-4 shadow-sm border border-teal-200">
+                <h3 class="text-md font-bold mb-2 flex items-center text-teal-800">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-2 text-yellow-500"></i>AIパーソナル分析
+                </h3>
+                <p class="text-xs text-teal-700 mb-3">最近の記録をもとに、AIがあなたにぴったりのアドバイスをします。</p>
+                <button id="ai-analyze-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-xl transition-colors shadow-sm text-sm mb-3">
+                    AIに分析してもらう
+                </button>
+                <div id="ai-analysis-result" class="hidden bg-white p-3 rounded-xl text-sm text-gray-700 border border-teal-100 min-h-[4rem] leading-relaxed">
+                    <!-- Output goes here -->
+                </div>
+            </div>
+
+            <!-- History List Card -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-teal-100">
+                <h3 class="text-md font-bold mb-4"><i class="fa-solid fa-list mr-2 text-teal-600"></i>記録一覧</h3>
+                <div id="history-list" class="space-y-3 max-h-80 overflow-y-auto pr-1">
+                    <!-- JS will populate this -->
+                </div>
+            </div>
+            
+        </section>
+
+        <!-- ==================== HEALING TAB ==================== -->
+        <section id="tab-healing" class="tab-content space-y-6">
+            
+            <div class="text-center py-4">
+                <h2 class="text-xl font-bold text-teal-700 mb-2">自律神経をととのえる</h2>
+                <p class="text-sm text-gray-600">少し時間を作って、心と体を休ませましょう。</p>
+            </div>
+
+            <!-- AI Counselor -->
+            <div class="bg-gradient-to-r from-pink-50 to-orange-50 rounded-2xl p-5 shadow-sm border border-pink-100">
+                <h3 class="text-md font-bold mb-2 flex items-center text-pink-800">
+                    <i class="fa-solid fa-heart mr-2 text-pink-500"></i>AIのやさしい相談室
+                </h3>
+                <p class="text-xs text-pink-700 mb-3">今の気持ちやモヤモヤを吐き出してみてください。AIが寄り添います。</p>
+                <textarea id="ai-chat-input" class="w-full border border-pink-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent resize-none mb-3 bg-white" rows="2" placeholder="なんだか今日は疲れてしまったな..."></textarea>
+                <button id="ai-chat-btn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 rounded-xl transition-colors shadow-sm text-sm">
+                    AIに聞いてみる
+                </button>
+                <div id="ai-chat-result" class="hidden mt-4 bg-white p-4 rounded-xl text-sm text-gray-700 border border-pink-100 relative shadow-sm leading-relaxed">
+                    <div class="absolute -top-2 left-6 w-4 h-4 bg-white border-l border-t border-pink-100 transform rotate-45"></div>
+                    <div id="ai-chat-text" class="relative z-10"></div>
+                </div>
+            </div>
+
+            <!-- Breathing Exercise -->
+            <div class="bg-teal-700 text-white rounded-2xl p-6 shadow-md text-center relative overflow-hidden">
+                <h3 class="text-lg font-bold mb-2 relative z-10">深呼吸タイマー</h3>
+                <p class="text-sm text-teal-100 mb-6 relative z-10">4秒吸って、8秒吐く。円の動きに合わせてみましょう。</p>
+                
+                <div class="flex justify-center items-center h-32 relative z-10">
+                    <div class="w-16 h-16 bg-teal-400 rounded-full breathe-circle flex items-center justify-center shadow-lg">
+                        <span class="text-teal-900 font-bold text-xs" id="breathe-text">吸う</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Yoga Section -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-teal-100">
+                <h3 class="text-md font-bold mb-3 border-b pb-2"><i class="fa-solid fa-person-praying mr-2 text-teal-600"></i>おすすめ簡単ヨガ</h3>
+                <div class="flex overflow-x-auto hide-scrollbar gap-4 pb-2">
+                    
+                    <div class="min-w-[200px] bg-orange-50 rounded-xl p-3 border border-orange-100 cursor-pointer hover:shadow-md transition-shadow" onclick="showModal('yoga1')">
+                        <div class="h-24 bg-orange-200 rounded-lg mb-2 flex items-center justify-center text-4xl">🧘‍♀️</div>
+                        <h4 class="font-bold text-sm text-orange-900">猫と牛のポーズ</h4>
+                        <p class="text-xs text-orange-700 mt-1">背骨をほぐし、自律神経を整える基本ポーズ。</p>
+                    </div>
+
+                    <div class="min-w-[200px] bg-blue-50 rounded-xl p-3 border border-blue-100 cursor-pointer hover:shadow-md transition-shadow" onclick="showModal('yoga2')">
+                        <div class="h-24 bg-blue-200 rounded-lg mb-2 flex items-center justify-center text-4xl">🛌</div>
+                        <h4 class="font-bold text-sm text-blue-900">チャイルドポーズ</h4>
+                        <p class="text-xs text-blue-700 mt-1">脳を休め、深いリラックス効果をもたらします。</p>
+                    </div>
+
+                    <div class="min-w-[200px] bg-green-50 rounded-xl p-3 border border-green-100 cursor-pointer hover:shadow-md transition-shadow" onclick="showModal('yoga3')">
+                        <div class="h-24 bg-green-200 rounded-lg mb-2 flex items-center justify-center text-4xl">🌲</div>
+                        <h4 class="font-bold text-sm text-green-900">木のポーズ</h4>
+                        <p class="text-xs text-green-700 mt-1">集中力を高め、心のグラウンディングに。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Music Section -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-teal-100">
+                <h3 class="text-md font-bold mb-3 border-b pb-2"><i class="fa-solid fa-music mr-2 text-teal-600"></i>癒しの環境音</h3>
+                <p class="text-xs text-gray-500 mb-3">※音が鳴ります。</p>
+                <div class="space-y-3">
+                    
+                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mr-3">
+                                <i class="fa-solid fa-water"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold">穏やかな波の音</h4>
+                                <p class="text-xs text-gray-500">1/fゆらぎでリラックス</p>
+                            </div>
+                        </div>
+                        <button class="sound-btn w-10 h-10 rounded-full bg-white border shadow-sm text-teal-600 hover:bg-teal-50" data-sound="wave">
+                            <i class="fa-solid fa-play play-icon"></i>
+                            <i class="fa-solid fa-pause pause-icon hidden"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 mr-3">
+                                <i class="fa-solid fa-tree"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold">森の小鳥たち</h4>
+                                <p class="text-xs text-gray-500">自然の中で深呼吸</p>
+                            </div>
+                        </div>
+                        <button class="sound-btn w-10 h-10 rounded-full bg-white border shadow-sm text-teal-600 hover:bg-teal-50" data-sound="forest">
+                            <i class="fa-solid fa-play play-icon"></i>
+                            <i class="fa-solid fa-pause pause-icon hidden"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 mr-3">
+                                <i class="fa-solid fa-fire-burner"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold">焚き火の音</h4>
+                                <p class="text-xs text-gray-500">心を落ち着かせるパチパチ音</p>
+                            </div>
+                        </div>
+                        <button class="sound-btn w-10 h-10 rounded-full bg-white border shadow-sm text-teal-600 hover:bg-teal-50" data-sound="fire">
+                            <i class="fa-solid fa-play play-icon"></i>
+                            <i class="fa-solid fa-pause pause-icon hidden"></i>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around p-2 pb-safe shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-20">
+        <button class="nav-btn flex flex-col items-center p-2 text-teal-600 w-1/3" data-target="tab-record">
+            <i class="fa-solid fa-pen-to-square text-xl mb-1"></i>
+            <span class="text-[10px] font-bold">記録</span>
+        </button>
+        <button class="nav-btn flex flex-col items-center p-2 text-gray-400 w-1/3 hover:text-teal-500 transition-colors" data-target="tab-history">
+            <i class="fa-solid fa-chart-pie text-xl mb-1"></i>
+            <span class="text-[10px] font-bold">分析・履歴</span>
+        </button>
+        <button class="nav-btn flex flex-col items-center p-2 text-gray-400 w-1/3 hover:text-teal-500 transition-colors" data-target="tab-healing">
+            <i class="fa-solid fa-spa text-xl mb-1"></i>
+            <span class="text-[10px] font-bold">癒し</span>
+        </button>
+    </nav>
+
+    <!-- Modal Overlay -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden flex items-center justify-center p-4">
+        
+        <!-- Yoga 1 Modal -->
+        <div id="modal-yoga1" class="modal-content bg-white rounded-2xl w-full max-w-sm overflow-hidden hidden relative">
+            <button class="absolute top-3 right-3 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200" onclick="closeModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="bg-orange-100 h-40 flex items-center justify-center text-6xl">🧘‍♀️</div>
+            <div class="p-5">
+                <h3 class="font-bold text-lg mb-2">猫と牛のポーズ (キャット＆カウ)</h3>
+                <p class="text-sm text-gray-600 mb-4">背骨を動かすことで自律神経が集まる脊髄を刺激し、心身のバランスを整えます。</p>
+                <ol class="text-sm text-gray-700 space-y-2 list-decimal list-inside">
+                    <li>四つん這いになり、肩の下に手首、腰の下に膝を置く。</li>
+                    <li>息を吐きながら、背中を丸め、おへそを覗き込む（猫のポーズ）。</li>
+                    <li>息を吸いながら、胸を張り、背中を反らせて目線を上へ（牛のポーズ）。</li>
+                    <li>呼吸に合わせて5〜10回ゆっくり繰り返す。</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Yoga 2 Modal -->
+        <div id="modal-yoga2" class="modal-content bg-white rounded-2xl w-full max-w-sm overflow-hidden hidden relative">
+            <button class="absolute top-3 right-3 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200" onclick="closeModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="bg-blue-100 h-40 flex items-center justify-center text-6xl">🛌</div>
+            <div class="p-5">
+                <h3 class="font-bold text-lg mb-2">チャイルドポーズ</h3>
+                <p class="text-sm text-gray-600 mb-4">全身の力を抜き、頭を心臓より低くすることで副交感神経を優位にし、高いリラックス効果を得ます。</p>
+                <ol class="text-sm text-gray-700 space-y-2 list-decimal list-inside">
+                    <li>正座の姿勢になる。</li>
+                    <li>息を吐きながら、両手を前に滑らせて上半身を前に倒す。</li>
+                    <li>おでこを床につけ、首や肩の力を抜く。</li>
+                    <li>背中や腰が広がるのを感じながら、深くゆっくりと呼吸を続ける（1〜3分）。</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Yoga 3 Modal -->
+        <div id="modal-yoga3" class="modal-content bg-white rounded-2xl w-full max-w-sm overflow-hidden hidden relative">
+            <button class="absolute top-3 right-3 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200" onclick="closeModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="bg-green-100 h-40 flex items-center justify-center text-6xl">🌲</div>
+            <div class="p-5">
+                <h3 class="font-bold text-lg mb-2">木のポーズ</h3>
+                <p class="text-sm text-gray-600 mb-4">バランスを取ることに意識を向けることで、雑念を払い集中力を高め、心を落ち着かせます。</p>
+                <ol class="text-sm text-gray-700 space-y-2 list-decimal list-inside">
+                    <li>両足を揃えてまっすぐ立つ。</li>
+                    <li>右足に体重をのせ、左足の裏を右足の内もも（またはふくらはぎ、足首）にあてる。（※膝関節は避ける）</li>
+                    <li>胸の前で合掌し、一点を見つめてバランスをとる。</li>
+                    <li>余裕があれば両手を上に伸ばし、数回深呼吸する。反対側も行う。</li>
+                </ol>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Load Tone.js for synthesized healing sounds
+        const toneJsScript = document.createElement('script');
+        toneJsScript.src = "https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js";
+        document.head.appendChild(toneJsScript);
+
+        // --- State Variables ---
+        let currentMood = null;
+        let selectedFactors = new Set();
+        // Mock initial data to show chart and analysis immediately
+        let healthData = [
+            { date: '2026-05-24', mood: 6, moodLabel: '良い', emoji: '😆', factors: ['よく眠れた', '運動した'], note: '天気が良くて気持ちよかった' },
+            { date: '2026-05-25', mood: 4, moodLabel: '普通', emoji: '😐', factors: ['仕事のストレス'], note: '会議が長引いた' },
+            { date: '2026-05-26', mood: 3, moodLabel: 'やや不調', emoji: '😞', factors: ['睡眠不足', '仕事のストレス'], note: '夜中に目が覚めた' },
+            { date: '2026-05-27', mood: 1, moodLabel: '絶不調', emoji: '😭', factors: ['睡眠不足', '天気痛/気圧', '飲みすぎ'], note: '頭痛がひどい' },
+            { date: '2026-05-28', mood: 4, moodLabel: '普通', emoji: '😐', factors: ['リラックスできた'], note: '早く帰れた' },
+            { date: '2026-05-29', mood: 5, moodLabel: 'やや良い', emoji: '🙂', factors: ['よく眠れた', '湯船に浸かった'], note: 'スッキリ起きれた' },
+            { date: '2026-05-30', mood: 2, moodLabel: '悪い', emoji: '😫', factors: ['天気痛/気圧', '仕事のストレス'], note: '雨でだるい' }
+        ];
+        let moodChartInstance = null;
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set current date
+            const today = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' };
+            document.getElementById('current-date').textContent = today.toLocaleDateString('ja-JP', options);
+
+            // Load saved data from localStorage if available, otherwise use mock
+            const savedData = localStorage.getItem('healthAppData');
+            if (savedData) {
+                try {
+                    healthData = JSON.parse(savedData);
+                } catch(e) {
+                    console.error("Could not parse saved data");
+                }
+            }
+
+            setupEventListeners();
+            updateHistoryView(); // Initialize history/analysis tab based on mock/saved data
+            
+            // Animation for breathing text
+            const breatheText = document.getElementById('breathe-text');
+            setInterval(() => {
+                if(breatheText.textContent === '吸う') {
+                    setTimeout(() => { breatheText.textContent = '吐く'; }, 4000);
+                } else {
+                    setTimeout(() => { breatheText.textContent = '吸う'; }, 4000);
+                }
+            }, 8000);
+        });
+
+        function setupEventListeners() {
+            // Navigation Tabs
+            const navBtns = document.querySelectorAll('.nav-btn');
+            navBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetId = btn.getAttribute('data-target');
+                    
+                    // Update tab content visibility
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.getElementById(targetId).classList.add('active');
+
+                    // Update nav button styles
+                    navBtns.forEach(b => {
+                        b.classList.remove('text-teal-600');
+                        b.classList.add('text-gray-400');
+                        b.classList.remove('bg-teal-50');
+                    });
+                    btn.classList.add('text-teal-600');
+                    btn.classList.remove('text-gray-400');
+                    
+                    // If switching to history, update chart and analysis
+                    if (targetId === 'tab-history') {
+                        updateHistoryView();
+                    }
+                });
+            });
+
+            // Mood Selection
+            document.querySelectorAll('.mood-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    currentMood = {
+                        val: parseInt(btn.getAttribute('data-val')),
+                        label: btn.getAttribute('data-label'),
+                        emoji: btn.textContent
+                    };
+                });
+            });
+
+            // Factor Selection
+            document.querySelectorAll('.factor-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    btn.classList.toggle('bg-teal-100');
+                    btn.classList.toggle('border-teal-400');
+                    btn.classList.toggle('text-teal-800');
+                    
+                    const text = btn.textContent.replace(/[^\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FA5]/g, '').trim(); // Remove emoji for storage
+                    if (selectedFactors.has(text)) {
+                        selectedFactors.delete(text);
+                    } else {
+                        selectedFactors.add(text);
+                    }
+                });
+            });
+
+            // Save Button
+            document.getElementById('save-btn').addEventListener('click', saveRecord);
+
+            // Sound Buttons
+            document.querySelectorAll('.sound-btn').forEach(btn => {
+                btn.addEventListener('click', toggleSound);
+            });
+
+            // AI Features
+            document.getElementById('ai-analyze-btn').addEventListener('click', generateAIAnalysis);
+            document.getElementById('ai-chat-btn').addEventListener('click', generateAIChat);
+        }
+
+        // --- Gemini API Helper ---
+        async function callGeminiAPI(prompt, systemInstruction) {
+            const apiKey = ""; // API key is automatically provided in this environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] }
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error('API request failed');
+            }
+
+            const data = await response.json();
+            if (data.candidates && data.candidates.length > 0) {
+                return data.candidates[0].content.parts[0].text;
+            }
+            return "応答を取得できませんでした。";
+        }
+
+        // --- AI Analysis Logic ---
+        async function generateAIAnalysis() {
+            const btn = document.getElementById('ai-analyze-btn');
+            const resultDiv = document.getElementById('ai-analysis-result');
+            
+            if (healthData.length === 0) {
+                resultDiv.innerHTML = "データがありません。まずは記録をつけてみてください。";
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            // 直近7日分のデータを文字列化
+            const recentData = healthData.slice(-7);
+            const dataStr = recentData.map(d => `日付:${d.date}, 気分:${d.moodLabel}(${d.mood}/7), 要因:${d.factors.join('、')}, メモ:${d.note}`).join('\n');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>分析中...';
+            resultDiv.innerHTML = '';
+            resultDiv.classList.add('hidden');
+
+            const systemPrompt = "あなたはユーザーの心身の健康をサポートする、優しく共感的な専属カウンセラーです。提供された直近の体調記録データを分析し、ユーザーの頑張りを労いつつ、心と体（特に自律神経）を整えるための具体的なアドバイスを1〜2つ提供してください。親しみやすいトーンで、200〜300文字程度で短くまとめてください。Markdownは使わずプレーンテキストで書いてください。";
+            const userPrompt = `以下の体調記録を分析してアドバイスをください。\n\n${dataStr}`;
+
+            try {
+                const responseText = await callGeminiAPI(userPrompt, systemPrompt);
+                resultDiv.innerHTML = responseText.replace(/\n/g, '<br>');
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                resultDiv.innerHTML = "<span class='text-red-500'>エラーが発生しました。時間を置いて再度お試しください。</span>";
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'AIに分析してもらう';
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        // --- AI Counseling Logic ---
+        async function generateAIChat() {
+            const input = document.getElementById('ai-chat-input').value.trim();
+            const btn = document.getElementById('ai-chat-btn');
+            const resultDiv = document.getElementById('ai-chat-result');
+            const resultText = document.getElementById('ai-chat-text');
+
+            if (!input) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>考え中...';
+            resultDiv.classList.add('hidden');
+            resultText.innerHTML = '';
+
+            const systemPrompt = "あなたはとても優しく、温かく、包容力のある心理カウンセラーです。ユーザーの悩みや吐き出しに対して、絶対に否定せず、深く共感し、心がフワッと軽くなるような優しい言葉をかけてください。専門用語は避け、友達や家族のように親しみやすいトーンで、200文字以内で短く返答してください。Markdownは使わずプレーンテキストで書いてください。";
+
+            try {
+                const responseText = await callGeminiAPI(input, systemPrompt);
+                resultText.innerHTML = responseText.replace(/\n/g, '<br>');
+                resultDiv.classList.remove('hidden');
+                document.getElementById('ai-chat-input').value = ''; // 入力をクリア
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                resultText.innerHTML = "<span class='text-red-500'>エラーが発生しました。</span>";
+                resultDiv.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'AIに聞いてみる';
+            }
+        }
+
+        function saveRecord() {
+            if (!currentMood) {
+                // Show simple message instead of alert
+                const noteInput = document.getElementById('note-input');
+                noteInput.placeholder = "※まずは「今日の体調」を選択してください";
+                noteInput.classList.add('border-red-300', 'bg-red-50');
+                setTimeout(() => {
+                    noteInput.placeholder = "気になったことなどを自由に記入";
+                    noteInput.classList.remove('border-red-300', 'bg-red-50');
+                }, 2000);
+                return;
+            }
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            const note = document.getElementById('note-input').value;
+
+            const newRecord = {
+                date: todayStr,
+                mood: currentMood.val,
+                moodLabel: currentMood.label,
+                emoji: currentMood.emoji,
+                factors: Array.from(selectedFactors),
+                note: note
+            };
+
+            // Check if record for today already exists and update, else push
+            const existingIndex = healthData.findIndex(d => d.date === todayStr);
+            if (existingIndex >= 0) {
+                healthData[existingIndex] = newRecord;
+            } else {
+                healthData.push(newRecord);
+            }
+
+            // Sort by date just in case
+            healthData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Save to localStorage
+            localStorage.setItem('healthAppData', JSON.stringify(healthData));
+
+            // Show success message
+            const msg = document.getElementById('save-message');
+            msg.classList.remove('hidden');
+            setTimeout(() => {
+                msg.classList.add('hidden');
+            }, 3000);
+            
+            // Reset form (optional, maybe user wants to see what they saved)
+            // But usually good to give feedback.
+        }
+
+        function updateHistoryView() {
+            renderChart();
+            renderAnalysis();
+            renderHistoryList();
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('moodChart').getContext('2d');
+            
+            // Get last 7 days data
+            const recentData = healthData.slice(-7);
+            const labels = recentData.map(d => {
+                const date = new Date(d.date);
+                return `${date.getMonth()+1}/${date.getDate()}`;
+            });
+            const dataPoints = recentData.map(d => d.mood);
+
+            if (moodChartInstance) {
+                moodChartInstance.destroy();
+            }
+
+            moodChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '体調レベル',
+                        data: dataPoints,
+                        borderColor: '#0d9488', // teal-600
+                        backgroundColor: 'rgba(13, 148, 136, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#0d9488',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 8,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    const labels = {1: '絶不調', 2: '悪い', 3: 'やや不調', 4: '普通', 5: 'やや良い', 6: '良い', 7: '絶好調'};
+                                    return labels[value] || '';
+                                }
+                            },
+                            grid: { color: '#f3f4f6' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const labels = {1: '😭 絶不調', 2: '😫 悪い', 3: '😞 やや不調', 4: '😐 普通', 5: '🙂 やや良い', 6: '😆 良い', 7: '✨ 絶好調'};
+                                    return labels[context.parsed.y];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderAnalysis() {
+            const container = document.getElementById('analysis-results');
+            
+            // Filter days where mood was bad (1, 2, or 3)
+            const badDays = healthData.filter(d => d.mood <= 3);
+            
+            if (badDays.length === 0) {
+                container.innerHTML = '<p class="text-sm text-center text-gray-500 py-4">素晴らしい！最近、体調が悪い記録はありません。</p>';
+                return;
+            }
+
+            // Count factors on bad days
+            const factorCounts = {};
+            let totalBadDaysWithFactors = 0;
+
+            badDays.forEach(day => {
+                if (day.factors && day.factors.length > 0) {
+                    totalBadDaysWithFactors++;
+                    day.factors.forEach(f => {
+                        factorCounts[f] = (factorCounts[f] || 0) + 1;
+                    });
+                }
+            });
+
+            if (totalBadDaysWithFactors === 0) {
+                container.innerHTML = '<p class="text-sm text-center text-gray-500 py-4">要因が記録されていないため、分析できません。</p>';
+                return;
+            }
+
+            // Sort factors by frequency
+            const sortedFactors = Object.entries(factorCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3); // Top 3
+
+            let html = '';
+            sortedFactors.forEach((item, index) => {
+                const factor = item[0];
+                const count = item[1];
+                const percentage = Math.round((count / badDays.length) * 100);
+                
+                // Color based on rank
+                const bgColors = ['bg-red-100 text-red-800', 'bg-orange-100 text-orange-800', 'bg-yellow-100 text-yellow-800'];
+                const colorClass = bgColors[index] || 'bg-gray-100 text-gray-800';
+
+                html += `
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                    <div class="flex items-center">
+                        <span class="w-6 text-center font-bold text-gray-400 mr-2">${index + 1}.</span>
+                        <span class="font-medium">${factor}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs px-2 py-1 rounded-full ${colorClass}">${count}回</span>
+                        <span class="text-xs text-gray-500 w-10 text-right">${percentage}%</span>
+                    </div>
+                </div>`;
+            });
+            
+            html += `<p class="text-xs text-gray-500 mt-2 text-right">※不調記録 ${badDays.length}日中の割合</p>`;
+            container.innerHTML = html;
+        }
+
+        function renderHistoryList() {
+            const container = document.getElementById('history-list');
+            container.innerHTML = '';
+
+            // Reverse to show newest first
+            const sortedData = [...healthData].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            sortedData.forEach(day => {
+                const dateObj = new Date(day.date);
+                const dateStr = `${dateObj.getMonth()+1}/${dateObj.getDate()}(${['日','月','火','水','木','金','土'][dateObj.getDay()]})`;
+                
+                // Set color based on mood
+                let moodColor = 'text-gray-600';
+                if (day.mood >= 5) moodColor = 'text-teal-600';
+                if (day.mood <= 3) moodColor = 'text-red-500';
+
+                const factorsHtml = day.factors && day.factors.length > 0 
+                    ? `<div class="flex flex-wrap gap-1 mt-2">
+                        ${day.factors.map(f => `<span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">${f}</span>`).join('')}
+                       </div>`
+                    : '';
+                
+                const noteHtml = day.note 
+                    ? `<p class="text-xs text-gray-500 mt-2 bg-gray-50 p-2 rounded">${day.note}</p>`
+                    : '';
+
+                container.innerHTML += `
+                <div class="border-b border-gray-100 pb-3 last:border-0">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-bold text-gray-700">${dateStr}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">${day.emoji}</span>
+                            <span class="text-sm font-bold ${moodColor}">${day.moodLabel}</span>
+                        </div>
+                    </div>
+                    ${factorsHtml}
+                    ${noteHtml}
+                </div>`;
+            });
+        }
+
+        // --- Modals ---
+        function showModal(id) {
+            document.getElementById('modal-overlay').classList.remove('hidden');
+            document.getElementById(`modal-${id}`).classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.add('hidden');
+            document.querySelectorAll('.modal-content').forEach(el => el.classList.add('hidden'));
+        }
+
+        // --- Sound Generation using Tone.js ---
+        // Instead of external URLs, synthesize calming sounds
+        let activeSound = null;
+        let synths = {};
+
+        function initSynths() {
+            if(Tone.context.state !== 'running') {
+                Tone.start();
+            }
+
+            if(Object.keys(synths).length > 0) return; // Already init
+
+            // 1. Wave Sound (Noise with filter modulation)
+            const waveNoise = new Tone.Noise("pink").start();
+            const waveFilter = new Tone.Filter(400, "lowpass");
+            const waveLfo = new Tone.LFO(0.1, 200, 1000).start();
+            waveLfo.connect(waveFilter.frequency);
+            const waveVol = new Tone.Volume(-20);
+            waveNoise.chain(waveFilter, waveVol, Tone.Destination);
+            
+            synths.wave = { noise: waveNoise, vol: waveVol };
+            waveVol.mute = true;
+
+            // 2. Forest Sound (High pitched random chirps)
+            const birdSynth = new Tone.FMSynth({
+                harmonicity: 2,
+                modulationIndex: 10,
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.1, decay: 0.2, sustain: 0.1, release: 0.5 },
+                modulation: { type: "square" },
+                modulationEnvelope: { attack: 0.1, decay: 0.1, sustain: 0.1, release: 0.1 }
+            });
+            const birdVol = new Tone.Volume(-15);
+            birdSynth.chain(birdVol, Tone.Destination);
+            
+            let birdLoop;
+            synths.forest = { 
+                synth: birdSynth, 
+                vol: birdVol,
+                start: () => {
+                    birdVol.mute = false;
+                    birdLoop = new Tone.Loop(time => {
+                        if(Math.random() > 0.5) {
+                            birdSynth.triggerAttackRelease(Math.random() * 1000 + 1000, 0.1, time);
+                            setTimeout(() => {
+                                if(!birdVol.mute) birdSynth.triggerAttackRelease(Math.random() * 1000 + 1500, 0.1);
+                            }, 200);
+                        }
+                    }, 2).start(0);
+                    Tone.Transport.start();
+                },
+                stop: () => {
+                    birdVol.mute = true;
+                    if(birdLoop) { birdLoop.stop(); birdLoop.dispose(); }
+                }
+            };
+
+            // 3. Fire Sound (Brown noise with random amplitude modulation)
+            const fireNoise = new Tone.Noise("brown").start();
+            const fireFilter = new Tone.Filter(800, "lowpass");
+            const fireVol = new Tone.Volume(-10);
+            
+            const crackleSynth = new Tone.MembraneSynth({
+                pitchDecay: 0.01,
+                octaves: 1,
+                oscillator: { type: "square" },
+                envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 }
+            });
+            crackleSynth.chain(fireVol, Tone.Destination);
+            fireNoise.chain(fireFilter, fireVol, Tone.Destination);
+
+            let fireLoop;
+            synths.fire = {
+                noise: fireNoise,
+                vol: fireVol,
+                start: () => {
+                    fireVol.mute = false;
+                    fireLoop = new Tone.Loop(time => {
+                        if(Math.random() > 0.7) {
+                            crackleSynth.triggerAttackRelease("C2", 0.05, time);
+                        }
+                    }, 0.2).start(0);
+                    Tone.Transport.start();
+                },
+                stop: () => {
+                    fireVol.mute = true;
+                    if(fireLoop) { fireLoop.stop(); fireLoop.dispose(); }
+                }
+            }
+        }
+
+        function toggleSound(e) {
+            initSynths();
+            
+            const btn = e.currentTarget;
+            const soundType = btn.getAttribute('data-sound');
+            const playIcon = btn.querySelector('.play-icon');
+            const pauseIcon = btn.querySelector('.pause-icon');
+            
+            const isPlaying = !pauseIcon.classList.contains('hidden');
+
+            // Stop all sounds first
+            document.querySelectorAll('.sound-btn').forEach(b => {
+                b.querySelector('.play-icon').classList.remove('hidden');
+                b.querySelector('.pause-icon').classList.add('hidden');
+                b.classList.remove('bg-teal-100', 'border-teal-400');
+            });
+
+            if(synths.wave) synths.wave.vol.mute = true;
+            if(synths.forest) synths.forest.stop();
+            if(synths.fire) synths.fire.stop();
+
+            if (!isPlaying) {
+                // Play new sound
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+                btn.classList.add('bg-teal-100', 'border-teal-400');
+                
+                if (soundType === 'wave') {
+                    synths.wave.vol.mute = false;
+                } else if (soundType === 'forest') {
+                    synths.forest.start();
+                } else if (soundType === 'fire') {
+                    synths.fire.start();
+                }
+            }
+        }
+
+    </script>
+</body>
+</html>
